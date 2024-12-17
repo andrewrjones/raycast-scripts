@@ -1,0 +1,1 @@
+raycast-script-commands/commands/system/caffeinate-status.sh
