@@ -2,11 +2,11 @@
 
 # Required parameters:
 # @raycast.schemaVersion 1
-# @raycast.title Copy URL as Markdown
+# @raycast.title Copy Current Page URL as Markdown
 # @raycast.mode compact
 
 # Optional parameters:
-# @raycast.icon 🔗
+# @raycast.icon 🧭
 
 # Documentation:
 # @raycast.author andrewjones
