@@ -1,0 +1,1 @@
+raycast-script-commands/commands/browsing/safari-current-page-url.sh
