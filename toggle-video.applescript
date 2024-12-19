@@ -1,1 +1,0 @@
-raycast-script-commands/commands/communication/zoom/toggle-video.applescript
