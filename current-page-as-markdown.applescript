@@ -24,11 +24,30 @@ property NSUTF8StringEncoding : a reference to 4
 property NSString : a reference to current application's NSString
 property NSAttributedString : a reference to current application's NSAttributedString
 
--- get the URL and page title as a HTML link
 property theLink : ""
-tell application "Safari" to tell document 1
-	set theLink to "[" & name & "](" & URL & ")"
+
+tell application "System Events"
+    set frontmostProcess to first process where it is frontmost
+    set appName to name of frontmostProcess
 end tell
+tell application appName
+    set windowName to the name of the front window
+end tell
+if appName is equal to "Safari" then
+    tell application "Safari" to tell document 1
+		set theLink to "[" & name & "](" & URL & ")"
+    end tell
+else if appName is equal to "Google Chrome" then
+	tell application "Google Chrome"
+		set activeTab to active tab of front window
+		set theLink to "[" & title of activeTab & "](" & URL of activeTab & ")"
+	end tell
+    tell application "Google Chrome"
+        set theURL to the URL of the active tab of the front window
+    end tell
+else
+    set theLink to ""
+end if
 
 -- convert to data
 set htmlString to NSString's stringWithString:theLink
