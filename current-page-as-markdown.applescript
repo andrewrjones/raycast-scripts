@@ -42,9 +42,6 @@ else if appName is equal to "Google Chrome" then
 		set activeTab to active tab of front window
 		set theLink to "[" & title of activeTab & "](" & URL of activeTab & ")"
 	end tell
-    tell application "Google Chrome"
-        set theURL to the URL of the active tab of the front window
-    end tell
 else
     set theLink to ""
 end if
