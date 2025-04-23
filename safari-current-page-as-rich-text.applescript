@@ -6,7 +6,7 @@
 # @raycast.mode silent
 
 # Optional parameters:
-# @raycast.icon 🧭
+# @raycast.icon 🔗
 
 # Documentation:
 # @raycast.author andrewjones
@@ -26,9 +26,23 @@ property NSAttributedString : a reference to current application's NSAttributedS
 
 -- get the URL and page title as a HTML link
 property theLink : ""
-tell application "Safari" to tell document 1
-	set theLink to "<a href='" & URL & "'>" & name & "</a>"
+tell application "System Events"
+    set frontmostProcess to first process where it is frontmost
+    set appName to name of frontmostProcess
 end tell
+tell application appName
+    set windowName to the name of the front window
+end tell
+if appName is equal to "Safari" then
+    tell application "Safari" to tell document 1
+		set theLink to "<a href='" & URL & "'>" & name & "</a>"
+    end tell
+else if appName is equal to "Google Chrome" then
+    tell application "Google Chrome"
+		set activeTab to active tab of front window
+		set theLink to "<a href='" & URL of activeTab & "'>" & title of activeTab & "</a>"
+	end tell
+end if
 
 -- convert to data
 set htmlString to NSString's stringWithString:theLink
