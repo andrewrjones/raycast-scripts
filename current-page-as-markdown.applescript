@@ -24,6 +24,18 @@ property NSUTF8StringEncoding : a reference to 4
 property NSString : a reference to current application's NSString
 property NSAttributedString : a reference to current application's NSAttributedString
 
+on cleanTitle(inputString)
+    -- Check if the input string contains the pattern "(number) title"
+    if inputString contains "(" then
+        -- Remove the leading number and whitespace
+        set titlePart to text ((offset of ")" in titlePart) + 2) through -1 of titlePart
+        return titlePart
+    else
+        -- If the input is already just a title, return it as is
+        return inputString
+    end if
+end cleanTitle
+
 property theLink : ""
 
 tell application "System Events"
@@ -35,12 +47,14 @@ tell application appName
 end tell
 if appName is equal to "Safari" then
     tell application "Safari" to tell document 1
-		set theLink to "[" & name & "](" & URL & ")"
+        set cleanTitle to my cleanTitle(name)
+		set theLink to "[" & cleanTitle & "](" & URL & ")"
     end tell
 else if appName is equal to "Google Chrome" then
 	tell application "Google Chrome"
 		set activeTab to active tab of front window
-		set theLink to "[" & title of activeTab & "](" & URL of activeTab & ")"
+        set cleanTitle to my cleanTitle(title of activeTab)
+		set theLink to "[" & cleanTitle & "](" & URL of activeTab & ")"
 	end tell
 else
     set theLink to ""
