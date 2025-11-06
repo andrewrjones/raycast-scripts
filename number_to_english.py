@@ -9,7 +9,7 @@
 # Optional parameters:
 # @raycast.icon 🔢
 # @raycast.needsConfirmation false
-# @raycast.argument1 { "type": "text", "placeholder": "input number", "percentEncoded": true }
+# @raycast.argument1 { "type": "text", "placeholder": "input number", "percentEncoded": false }
 
 # Documentation:
 # @raycast.author andrewjones
