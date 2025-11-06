@@ -3,7 +3,7 @@
 # Required parameters:
 # @raycast.schemaVersion 1
 # @raycast.title Readtime
-# @raycast.mode silent
+# @raycast.mode compact
 # @raycast.refreshTime 1h
 
 # Optional parameters:
