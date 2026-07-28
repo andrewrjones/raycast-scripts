@@ -12,62 +12,99 @@
 # @raycast.author andrewjones
 # @raycast.authorURL https://andrew-jones.com
 
--- source: https://forum.latenightsw.com/t/html-styled-text-in-a-variable/2285/4
-
 use AppleScript version "2.4" -- Yosemite (10.10) or later
 use framework "Foundation"
-use framework "AppKit"
 use scripting additions
 
--- classes, constants, and enums used
-property NSUTF8StringEncoding : a reference to 4
 property NSString : a reference to current application's NSString
-property NSAttributedString : a reference to current application's NSAttributedString
+property NSCharacterSet : a reference to current application's NSCharacterSet
+property NSRegularExpressionSearch : 1024
 
-on cleanTitle(inputString)
-    -- Check if the input string contains the pattern "(number) title"
-    if inputString contains "(" then
-        -- Remove the leading number and whitespace
-        set titlePart to text ((offset of ")" in titlePart) + 2) through -1 of titlePart
-        return titlePart
-    else
-        -- If the input is already just a title, return it as is
-        return inputString
-    end if
-end cleanTitle
+on run argv
+	-- Test seam: `./current-page-as-markdown.applescript --clean-title "(1) A page"` cleans a
+	-- title without touching a browser or the clipboard.
+	if (count of argv) is 2 and item 1 of argv is "--clean-title" then
+		return cleanedTitle(item 2 of argv)
+	end if
 
-property theLink : ""
+	set browserName to frontmostBrowser()
+	if browserName is "" then return "Not a supported browser"
 
-tell application "System Events"
-    set frontmostProcess to first process where it is frontmost
-    set appName to name of frontmostProcess
-end tell
-tell application appName
-    set windowName to the name of the front window
-end tell
-if appName is equal to "Safari" then
-    tell application "Safari" to tell document 1
-        set cleanTitle to my cleanTitle(name)
-		set theLink to "[" & cleanTitle & "](" & URL & ")"
-    end tell
-else if appName is equal to "Google Chrome" then
-	tell application "Google Chrome"
-		set activeTab to active tab of front window
-        set cleanTitle to my cleanTitle(title of activeTab)
-		set theLink to "[" & cleanTitle & "](" & URL of activeTab & ")"
+	set thePage to frontPage(browserName)
+	set theURL to pageURL of thePage
+	set linkText to cleanedTitle(pageTitle of thePage)
+	if linkText is "" then set linkText to theURL
+
+	set theLink to "[" & linkText & "](" & markdownURL(theURL) & ")"
+	set the clipboard to theLink
+	return theLink
+end run
+
+on frontmostBrowser()
+	tell application "System Events"
+		set appName to name of first process whose frontmost is true
 	end tell
-else
-    set theLink to ""
-end if
+	if appName is "Safari" or appName is "Google Chrome" then return appName
+	return ""
+end frontmostBrowser
 
--- convert to data
-set htmlString to NSString's stringWithString:theLink
-set htmlData to htmlString's dataUsingEncoding:NSUTF8StringEncoding
--- make attributed string
-set attString to NSAttributedString's alloc()'s initWithHTML:htmlData documentAttributes:(missing value)
--- get pasteboard
-set pb to current application's NSPasteboard's generalPasteboard()
-pb's clearContents()
-pb's writeObjects:{attString}
+on frontPage(browserName)
+	if browserName is "Safari" then
+		tell application "Safari"
+			if (count of windows) is 0 then error "No Safari window is open"
+			set activeTab to current tab of front window
+			set foundURL to URL of activeTab
+			-- A tab's name is the page's own title. A document's or window's name is prefixed
+			-- with the Safari profile name ("Personal — Some page"), which has no place in
+			-- the link, so neither is used here.
+			set foundTitle to name of activeTab
+			if foundTitle is "" then
+				-- Needs Develop > Allow JavaScript from Apple Events.
+				try
+					set jsTitle to (do JavaScript "document.title" in activeTab)
+					if jsTitle is not missing value then set foundTitle to jsTitle as text
+				end try
+			end if
+		end tell
+	else
+		tell application "Google Chrome"
+			if (count of windows) is 0 then error "No Chrome window is open"
+			set activeTab to active tab of front window
+			set foundURL to URL of activeTab
+			set foundTitle to title of activeTab
+		end tell
+	end if
+	return {pageTitle:foundTitle, pageURL:foundURL}
+end frontPage
 
-return theLink
+on cleanedTitle(rawTitle)
+	set theTitle to rawTitle as text
+	-- Sites such as Notion prefix the title with an unread count, either at the front or just
+	-- after the page's emoji: "(3) A page", "🤔 (3) A page". Anchored, and only non-word
+	-- characters may precede the count, so parenthesised digits elsewhere in a title survive.
+	set theTitle to regexReplace(theTitle, "^(\\W*?)\\(\\d+\\)\\s*", "$1")
+	set theTitle to regexReplace(theTitle, "\\s+", " ")
+	-- Escape the characters that would otherwise close the Markdown link text early.
+	set theTitle to regexReplace(theTitle, "([\\[\\]])", "\\\\$1")
+	return trimmed(theTitle)
+end cleanedTitle
+
+on markdownURL(theURL)
+	-- Parentheses or spaces would break a bare URL; the angle-bracket form is unambiguous.
+	if theURL contains "(" or theURL contains ")" or theURL contains " " then
+		return "<" & theURL & ">"
+	end if
+	return theURL
+end markdownURL
+
+on regexReplace(theText, thePattern, theTemplate)
+	set subject to NSString's stringWithString:theText
+	set replaced to subject's stringByReplacingOccurrencesOfString:thePattern withString:theTemplate options:NSRegularExpressionSearch range:{0, subject's |length|()}
+	return replaced as text
+end regexReplace
+
+on trimmed(theText)
+	set subject to NSString's stringWithString:theText
+	set whitespace to NSCharacterSet's whitespaceAndNewlineCharacterSet()
+	return (subject's stringByTrimmingCharactersInSet:whitespace) as text
+end trimmed
