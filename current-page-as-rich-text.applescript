@@ -34,8 +34,11 @@ tell application appName
     set windowName to the name of the front window
 end tell
 if appName is equal to "Safari" then
-    tell application "Safari" to tell document 1
-		set theLink to "<a href='" & URL & "'>" & name & "</a>"
+    tell application "Safari"
+		-- A tab's name is the page's own title. A document's or window's name is prefixed with
+		-- the Safari profile name ("Personal — Some page"), which has no place in the link.
+		set activeTab to current tab of front window
+		set theLink to "<a href='" & URL of activeTab & "'>" & name of activeTab & "</a>"
     end tell
 else if appName is equal to "Google Chrome" then
     tell application "Google Chrome"
